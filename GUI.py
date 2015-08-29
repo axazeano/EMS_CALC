@@ -8,7 +8,6 @@ api = EMS_API()
 
 # =========GUI DESCRIPTION==========
 root = Tkinter.Tk()
-# root.win= 'EMS Calculator'
 
 label_from = ttk.Label(root, text='From location:')
 label_from.grid(row=0, column=0)
@@ -34,36 +33,8 @@ radiobutton_attr.grid(row=2, column=2)
 
 label_status = ttk.Label(root, text='')
 label_status.grid(row=3, column=0)
-
-# label_max_weight = ttk.Label(root, text='')
-# label_max_weight.pack()
-# button_get_max_weight = ttk.Button(root, text='max weight')
-# button_get_max_weight.pack()
 # =========END GUI DESCRIPTION==========
 
-
-# def new_thread(func, demon=False):
-#     """
-#     Decorator for launch function in another thread
-#     :param func: function, which will be launch in another thread
-#     :param demon: if demon is True, than thread dies with main thread, i.e. will be work all time.
-#     By default it's False.
-#     :return: return pointer to function, witch will be run in another thread
-#     """
-#
-#     from functools import wraps
-#
-#     @wraps(func)
-#     def new_thread_func(*args, **kwargs):
-#         thread = threading.Thread(target=func, args=args, kwargs=kwargs)
-#         if demon:
-#             thread.daemon = True
-#         else:
-#             thread.daemon = False
-#         thread.start()
-#         return thread
-#
-#     return new_thread_func
 
 def new_thread(daemon=False):
     """
@@ -105,16 +76,5 @@ def connection_status():
         time.sleep(5)
 
 
-# @new_thread
-# def load_locations():
-#     pass
-
-
-# @new_thread
-# def set_max_weight():
-#     label_max_weight['text'] = api.get_max_weight()
-
-
 connection_status()
-# button_get_max_weight['command'] = set_max_weight
 root.mainloop()
