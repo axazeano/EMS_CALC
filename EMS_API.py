@@ -40,12 +40,6 @@ class EMS_API():
             logging.error('HeartBeat: Empty heartbeat msg')
             return False
 
-    def start_heartbeat(self):
-        heartbeat = threading.Thread(target=self.heartbeat)
-        heartbeat.daemon = True
-        logging.info('heartbeat has be started')
-        heartbeat.start()
-
     def get_max_weight(self):
         response = APIUtils.safe_connection(self.make_url_for('get_max_weight'))
         parsed_json_object = APIUtils.safe_json_parse(response)
