@@ -79,5 +79,23 @@ def connection_status():
         time.sleep(5)
 
 
+class Locations:
+    def __init__(self, *args):
+        self.locations = {}
+        self.args = args
+
+    @new_thread(daemon=False)
+    def load_locations(self):
+        logging.debug('Loading locations: Start loading locations')
+        for type in self.args:
+            locations_in_json = api.get_locations(type)
+            for location in locations_in_json['rsp']['locations']:
+                self.locations[location['name']] = location['value']
+        logging.debug('Loading locations: '+ str(len(self.locations))+ ' locations has been loaded')
+
+
+loc = Locations('russia')
+loc.load_locations()
+
 connection_status()
 root.mainloop()
