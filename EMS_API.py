@@ -101,7 +101,7 @@ class APIUtils:
             parsed_json = json.loads(json_string)
         except ValueError, e:
             logging.error('Parse error')
+            return None
         else:
             logging.debug('JSON parsed successfully')
             return parsed_json
-        return False
