@@ -54,7 +54,7 @@ class EMS_API():
         response = APIUtils.safe_connection(self.make_url_for('get.locations',
                                                               type=type,
                                                               plain=plain))
-        return APIUtils.safe_json_parse(response)
+        return APIUtils.safe_json_parse(response)['rsp']['locations']
 
     def calculate(self, from_location, to_location, weight, type):
         response = APIUtils.safe_connection(self.make_url_for('calculate',
