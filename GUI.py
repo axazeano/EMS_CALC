@@ -1,0 +1,120 @@
+import Tkinter
+import time
+import threading
+import ttk
+from EMS_API import EMS_API
+
+api = EMS_API()
+
+# =========GUI DESCRIPTION==========
+root = Tkinter.Tk()
+# root.win= 'EMS Calculator'
+
+label_from = ttk.Label(root, text='From location:')
+label_from.grid(row=0, column=0)
+entry_from = ttk.Entry(root)
+entry_from.grid(row=0, column=1)
+
+label_to = ttk.Label(root, text='To location:')
+label_to.grid(row=1, column=0)
+entry_to = ttk.Entry(root)
+entry_to.grid(row=1, column=1)
+
+type_of_package_var = Tkinter.IntVar()
+
+label_type = ttk.Label(root, text='Type of package:')
+label_type.grid(row=2, column=0)
+
+radiobutton_doc = ttk.Radiobutton(root, variable=type_of_package_var, value=1, text='Documents')
+radiobutton_doc.grid(row=2, column=1)
+
+radiobutton_attr = ttk.Radiobutton(root, variable=type_of_package_var, value=2, text='Commodity Investments')
+radiobutton_attr.grid(row=2, column=2)
+
+
+label_status = ttk.Label(root, text='')
+label_status.grid(row=3, column=0)
+
+# label_max_weight = ttk.Label(root, text='')
+# label_max_weight.pack()
+# button_get_max_weight = ttk.Button(root, text='max weight')
+# button_get_max_weight.pack()
+# =========END GUI DESCRIPTION==========
+
+
+# def new_thread(func, demon=False):
+#     """
+#     Decorator for launch function in another thread
+#     :param func: function, which will be launch in another thread
+#     :param demon: if demon is True, than thread dies with main thread, i.e. will be work all time.
+#     By default it's False.
+#     :return: return pointer to function, witch will be run in another thread
+#     """
+#
+#     from functools import wraps
+#
+#     @wraps(func)
+#     def new_thread_func(*args, **kwargs):
+#         thread = threading.Thread(target=func, args=args, kwargs=kwargs)
+#         if demon:
+#             thread.daemon = True
+#         else:
+#             thread.daemon = False
+#         thread.start()
+#         return thread
+#
+#     return new_thread_func
+
+def new_thread(daemon=False):
+    """
+    Decorator for launch function in another thread
+    :param func: function, which will be launch in another thread
+    :param demon: if demon is True, than thread dies with main thread, i.e. will be work all time.
+    By default it's False.
+    :return: return pointer to function, witch will be run in another thread
+    """
+    def wrapper(func):
+        def new_thread_func(*args, **kwargs):
+            thread = threading.Thread(target=func, args=args, kwargs=kwargs)
+            if daemon:
+                thread.daemon = True
+            else:
+                thread.daemon = False
+            thread.start()
+            return thread
+
+        return new_thread_func
+
+    return wrapper
+
+
+
+@new_thread(daemon=True)
+def connection_status():
+    """
+    Check heartbeat of EMS API
+    :return:
+    """
+    while True:
+        if api.heartbeat():
+            label_status['text'] = 'API is available'
+            label_status['foreground'] = 'green'
+        else:
+            label_status['text'] = 'API is unavailable'
+            label_status['foreground'] = 'red'
+        time.sleep(5)
+
+
+# @new_thread
+# def load_locations():
+#     pass
+
+
+# @new_thread
+# def set_max_weight():
+#     label_max_weight['text'] = api.get_max_weight()
+
+
+connection_status()
+# button_get_max_weight['command'] = set_max_weight
+root.mainloop()
