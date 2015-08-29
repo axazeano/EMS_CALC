@@ -1,0 +1,107 @@
+__author__ = 'kubantsev'
+
+import urllib2
+import threading
+import json
+import httplib
+import logging
+
+
+class EMS_API():
+    logging.basicConfig(format=u'%(filename)s[LINE:%(lineno)d]# %(levelname)-8s [%(asctime)s]  %(message)s',
+                        level=logging.DEBUG)
+    base_api_url = 'http://emspost.ru/api/rest/'
+    methods = {
+        'echo': 'ems.test.echo',
+        'get_max_weight': 'ems.get.max.weight',
+        'get.locations': 'ems.get.locations',
+        'calculate': 'ems.calculate'
+    }
+
+    def make_url_for(self, method, **kwargs):
+        url = self.base_api_url + '?method=' + self.methods[method]
+        for key, value in kwargs.iteritems():
+            url += '&' + key + '=' + value
+        # from is python keyword
+        url = url.replace('from_location', 'from')
+        return url
+
+    def heartbeat(self):
+        response = APIUtils.safe_connection(self.make_url_for('echo'))
+        if response:
+            parsed_response = APIUtils.safe_json_parse(response)
+            if parsed_response['rsp']['msg'] == 'successeful':
+                logging.info('HeartBeat: EMS API is available')
+                return True
+            else:
+                logging.info('HeartBeat: EMS API is unavailable')
+                return False
+        else:
+            logging.error('HeartBeat: Empty heartbeat msg')
+            return False
+
+    def start_heartbeat(self):
+        heartbeat = threading.Thread(target=self.heartbeat)
+        heartbeat.daemon = True
+        logging.info('heartbeat has be started')
+        heartbeat.start()
+
+    def get_max_weight(self):
+        response = APIUtils.safe_connection(self.make_url_for('get_max_weight'))
+        return APIUtils.safe_json_parse(response)['rsp']['max_weight']
+
+    def get_locations(self, type, plain='false'):
+        response = APIUtils.safe_connection(self.make_url_for('get.locations',
+                                                              type=type,
+                                                              plain=plain))
+        return response.read()
+
+    def calculate(self, from_location, to_location, weight, type):
+        response = urllib2.urlopen(self.make_url_for('calculate',
+                                                     from_location=from_location,
+                                                     to=to_location,
+                                                     weight=weight,
+                                                     type=type))
+        return response.read()
+
+
+class APIUtils:
+    """
+    Class contains some functions for work with REST API.
+    """
+
+    @staticmethod
+    def safe_connection(url):
+        """
+        Try connect to url and read data. If error happened, check witch exception was raised.
+        :param url: url for connection
+        :return: Return data from URL, in case when all works fine, else return None
+        """
+        try:
+            response = urllib2.urlopen(url)
+        except urllib2.HTTPError, e:
+            logging.error('HTTPError = ' + str(e.code))
+        except urllib2.URLError:
+            logging.error('URLError')
+        except httplib.HTTPException:
+            logging.error('URLError')
+        else:
+            logging.debug(url + ' has be successfully opened')
+            return response.read()
+        return None
+
+    @staticmethod
+    def safe_json_parse(json_string):
+        """
+        Try to parse incoming json object
+        :param json_string: incoming string with json object
+        :return: if json_string jas been parsed without errors return parsed object, else return None
+        """
+        try:
+            parsed_json = json.loads(json_string)
+        except ValueError, e:
+            logging.error('Parse error')
+        else:
+            logging.debug('JSON parsed successfully')
+            return parsed_json
+        return False
