@@ -48,7 +48,11 @@ class EMS_API():
 
     def get_max_weight(self):
         response = APIUtils.safe_connection(self.make_url_for('get_max_weight'))
-        return APIUtils.safe_json_parse(response)['rsp']['max_weight']
+        parsed_json_object = APIUtils.safe_json_parse(response)
+        if parsed_json_object:
+            return parsed_json_object['rsp']['max_weight']
+        else:
+            return None
 
     def get_locations(self, type, plain='false'):
         response = APIUtils.safe_connection(self.make_url_for('get.locations',
