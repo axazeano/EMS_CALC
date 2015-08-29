@@ -54,15 +54,15 @@ class EMS_API():
         response = APIUtils.safe_connection(self.make_url_for('get.locations',
                                                               type=type,
                                                               plain=plain))
-        return response.read()
+        return APIUtils.safe_json_parse(response)
 
     def calculate(self, from_location, to_location, weight, type):
-        response = urllib2.urlopen(self.make_url_for('calculate',
+        response = APIUtils.safe_connection(self.make_url_for('calculate',
                                                      from_location=from_location,
                                                      to=to_location,
                                                      weight=weight,
                                                      type=type))
-        return response.read()
+        return APIUtils.safe_json_parse(response)
 
 
 class APIUtils:
