@@ -1,10 +1,13 @@
 import Tkinter
+import logging
 import time
 import threading
 import ttk
 from EMS_API import EMS_API
 
 api = EMS_API()
+logging.basicConfig(format=u'%(filename)s[LINE:%(lineno)d]# %(levelname)-8s [%(asctime)s]  %(message)s',
+                        level=logging.DEBUG)
 
 # =========GUI DESCRIPTION==========
 root = Tkinter.Tk()
