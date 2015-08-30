@@ -33,6 +33,13 @@ radiobutton_doc.grid(row=2, column=1)
 radiobutton_attr = ttk.Radiobutton(root, variable=type_of_package_var, value=2, text='Commodity Investments')
 radiobutton_attr.grid(row=2, column=2)
 
+option_var = Tkinter.StringVar(root)
+option_var.set("one")
+options_test = ttk.OptionMenu(root, option_var, "one", "two", "three")
+options_test.grid(row=4, column=0)
+
+
+
 
 label_status = ttk.Label(root, text='')
 label_status.grid(row=3, column=0)
@@ -90,12 +97,14 @@ class Locations:
         for type in self.args:
             locations_in_json = api.get_locations(type)
             for location in locations_in_json:
-                self.locations[location['name']] = location['value']
+                self.locations[location['name']] = {
+                    'value': location['value'],
+                    'type': location['type'],
+                }
         logging.debug('Loading locations: '+ str(len(self.locations))+ ' locations has been loaded')
 
 
 loc = Locations('russia')
 loc.load_locations()
-
 connection_status()
 root.mainloop()
