@@ -34,14 +34,6 @@ radiobutton_doc.grid(row=2, column=1)
 radiobutton_attr = ttk.Radiobutton(root, variable=type_of_package_var, value=2, text='Commodity Investments')
 radiobutton_attr.grid(row=2, column=2)
 
-option_var = Tkinter.StringVar(root)
-option_var.set("one")
-options_test = ttk.OptionMenu(root, option_var)
-options_test.grid(row=4, column=0)
-
-
-
-
 label_status = ttk.Label(root, text='')
 label_status.grid(row=3, column=0)
 # =========END GUI DESCRIPTION==========
@@ -102,13 +94,8 @@ class Locations:
                     'value': location['value'],
                     'type': location['type'],
                 }
-        pass
-        options_test.option_add('', loc.locations.keys())
         logging.debug('Loading locations: '+ str(len(self.locations))+ ' locations has been loaded')
 
 
-loc = Locations('russia')
-loc.load_locations()
-options_test.set_menu('one', loc.locations.keys())
 connection_status()
 root.mainloop()
