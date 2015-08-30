@@ -11,6 +11,7 @@ logging.basicConfig(format=u'%(filename)s[LINE:%(lineno)d]# %(levelname)-8s [%(a
 
 # =========GUI DESCRIPTION==========
 root = Tkinter.Tk()
+root.wm_title('EMS Calc')
 
 label_from = ttk.Label(root, text='From location:')
 label_from.grid(row=0, column=0)
@@ -35,7 +36,7 @@ radiobutton_attr.grid(row=2, column=2)
 
 option_var = Tkinter.StringVar(root)
 option_var.set("one")
-options_test = ttk.OptionMenu(root, option_var, "one", "two", "three")
+options_test = ttk.OptionMenu(root, option_var)
 options_test.grid(row=4, column=0)
 
 
@@ -101,10 +102,13 @@ class Locations:
                     'value': location['value'],
                     'type': location['type'],
                 }
+        pass
+        options_test.option_add('', loc.locations.keys())
         logging.debug('Loading locations: '+ str(len(self.locations))+ ' locations has been loaded')
 
 
 loc = Locations('russia')
 loc.load_locations()
+options_test.set_menu('one', loc.locations.keys())
 connection_status()
 root.mainloop()
