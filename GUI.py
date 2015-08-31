@@ -132,7 +132,7 @@ class Locations:
         for type in self.args:
             locations_in_json = api.get_locations(type)
             for location in locations_in_json:
-                self.locations[location['name']] = {
+                self.locations[self.normalize_location(location['name'])] = {
                     'value': location['value'],
                     'type': location['type'],
                 }
