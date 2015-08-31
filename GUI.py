@@ -155,6 +155,22 @@ class Locations:
                         location = location.replace(x, self.replacements[x])
         return location
 
+loc = Locations('russia', 'countries')
+
+@new_thread(daemon=True)
+def set_locations_to_comboboxes(*args):
+    for combobox in args:
+        combobox['state'] = 'disabled'
+        combobox.set('Loading locations...')
+
+    loc.load_locations()
+
+    for combobox in args:
+        combobox['state'] = 'enable'
+        combobox.set('Select location')
+        combobox['values'] = loc.locations.keys()
+
+set_locations_to_comboboxes(combobox_from, combobox_to)
 
 connection_status()
 root.mainloop()
