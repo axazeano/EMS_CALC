@@ -1,3 +1,5 @@
+import time
+
 __author__ = 'kubantsev'
 
 import urllib2
@@ -49,7 +51,9 @@ class EMS_API():
         if parsed_json_object:
             return parsed_json_object['rsp']['max_weight']
         else:
-            return None
+            logging.error('Method ems.get.max.weight: error. Trying again...')
+            time.sleep(5)
+            return self.get_max_weight()
 
     def get_locations(self, type, plain='false'):
         response = APIUtils.safe_connection(self.make_url_for('get.locations',
