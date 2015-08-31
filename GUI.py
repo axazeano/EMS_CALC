@@ -1,3 +1,4 @@
+# coding=utf-8
 import Tkinter
 import logging
 import time
@@ -111,6 +112,19 @@ class Locations:
     def __init__(self, *args):
         self.locations = {}
         self.args = args
+        self.replacements = {
+            u'край': u' край',
+            u'округ': u' округ',
+            u'автономный': u' автономный ',
+            u'область': u' область',
+            u'автономная': u' автономная ',
+            u'республика': u' республика',
+            u'район': u' район',
+            u'промышленнный': u' промышленный ', # sic!
+            u'осетия': u' Осетия',
+            u'алания': u'Алания',
+            u'долгано': u' Долгано',
+        }
 
     @new_thread(daemon=False)
     def load_locations(self):
