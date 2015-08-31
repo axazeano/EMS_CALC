@@ -6,10 +6,12 @@ import json
 import httplib
 import logging
 
+logging.basicConfig(format=u'%(filename)s[LINE:%(lineno)d]# %(levelname)-8s [%(asctime)s]  %(message)s',
+                        level=logging.DEBUG)
+# TODO: set correct logging config
+
 
 class EMS_API():
-    logging.basicConfig(format=u'%(filename)s[LINE:%(lineno)d]# %(levelname)-8s [%(asctime)s]  %(message)s',
-                        level=logging.DEBUG)
     base_api_url = 'http://emspost.ru/api/rest/'
     methods = {
         'echo': 'ems.test.echo',
