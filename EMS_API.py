@@ -12,13 +12,14 @@ logging.basicConfig(format=u'%(filename)s[LINE:%(lineno)d]# %(levelname)-8s [%(a
 
 
 class EMS_API():
-    base_api_url = 'http://emspost.ru/api/rest/'
-    methods = {
-        'echo': 'ems.test.echo',
-        'get_max_weight': 'ems.get.max.weight',
-        'get.locations': 'ems.get.locations',
-        'calculate': 'ems.calculate'
-    }
+    def __init__(self):
+        self.base_api_url = 'http://emspost.ru/api/rest/'
+        self.methods = {
+            'echo': 'ems.test.echo',
+            'get_max_weight': 'ems.get.max.weight',
+            'get.locations': 'ems.get.locations',
+            'calculate': 'ems.calculate'
+        }
 
     def make_url_for(self, method, **kwargs):
         url = self.base_api_url + '?method=' + self.methods[method]
