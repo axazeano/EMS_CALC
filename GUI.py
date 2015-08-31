@@ -1,6 +1,7 @@
 # coding=utf-8
 import Tkinter
 import logging
+import re
 import time
 import threading
 import ttk
@@ -136,6 +137,23 @@ class Locations:
                     'type': location['type'],
                 }
         logging.debug('Loading locations: '+ str(len(self.locations))+ ' locations has been loaded')
+
+    def normalize_location(self, location):
+        location = location.capitalize()
+        pattern = ''
+        # pattern prepare
+        for key in self.replacements:
+            pattern += '(%s)|' % key
+        # remove redundant '|' at the end of pattern
+        pattern = pattern[:-1]
+        search_results = re.findall(pattern, location)
+
+        if search_results:
+            for key in search_results:
+                for x in key:
+                    if x:
+                        location = location.replace(x, self.replacements[x])
+        return location
 
 
 connection_status()
