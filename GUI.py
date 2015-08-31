@@ -126,7 +126,6 @@ class Locations:
             u'долгано': u' Долгано',
         }
 
-    @new_thread(daemon=False)
     def load_locations(self):
         logging.debug('Loading locations: Start loading locations')
         for type in self.args:
