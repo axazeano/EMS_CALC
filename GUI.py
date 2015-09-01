@@ -18,9 +18,6 @@ root.wm_title('EMS Calc')
 label_from = ttk.Label(root, text='From location:')
 label_from.grid(row=0, column=0, sticky='e')
 
-entry_from = ttk.Entry(root)
-entry_from.grid(row=0, column=2)
-
 label_to = ttk.Label(root, text='To location:')
 label_to.grid(row=1, column=0, sticky='e')
 
