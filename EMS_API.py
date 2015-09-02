@@ -125,12 +125,12 @@ class EMS_API():
         if parsed_json_object:
             # Case for local delivery
             if from_location is None and type is None:
+                return {'price': parsed_json_object['rsp']['price']}
+            # Case for international delivery
+            else:
                 return {'price': parsed_json_object['rsp']['price'],
                         'min_days': parsed_json_object['rsp']['term']['min'],
                         'max_days': parsed_json_object['rsp']['term']['max']}
-            # Case for international delivery
-            else:
-                return {'price': parsed_json_object['rsp']['price']}
         # If parsed_json_object is empty method returns None
         else:
             return None
