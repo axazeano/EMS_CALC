@@ -14,6 +14,20 @@ logging.basicConfig(format=u'%(filename)s[LINE:%(lineno)d]# %(levelname)-8s [%(a
 
 
 class EMS_API():
+    """
+    Realization of EMS customers API
+    Description of API: http://www.emspost.ru/ru/corp_clients/dogovor_docements/api/
+
+    API Methods:
+        ems.test.echo - method for check available of API
+
+        ems.get.locations - method for get locations.
+        Locations are used for define start and finish points of delivery
+
+        ems.get.max.weight - method for get max weight of package
+
+        ems.calculate - method for calculate costs of delivery and duration of delivery (for local delivery)
+    """
     def __init__(self):
         self.executor = futures.ThreadPoolExecutor(max_workers=5)
         # Root url for API
@@ -30,7 +44,7 @@ class EMS_API():
 
     def make_url_for(self, method, **kwargs):
         """
-        Produce methods for API calls
+        Produce urls for API calls
         :param method: API method, which will be called
         :param kwargs: Dict where keys are names of params, and values are values of params
         :return: Complete url
