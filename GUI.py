@@ -1,4 +1,5 @@
 # coding=utf-8
+from Tkconstants import BOTTOM
 import Tkinter
 import logging
 import re
@@ -14,57 +15,6 @@ logging.basicConfig(format=u'%(filename)s[LINE:%(lineno)d]# %(levelname)-8s [%(a
 # =========GUI DESCRIPTION==========
 root = Tkinter.Tk()
 root.wm_title('EMS Calc')
-
-label_from = ttk.Label(root, text='From location:')
-label_from.grid(row=0, column=0, sticky='e')
-
-label_to = ttk.Label(root, text='To location:')
-label_to.grid(row=1, column=0, sticky='e')
-
-combobox_from = ttk.Combobox(root, values=[u"..."], height=10, width=30)
-combobox_from.grid(row=0, column=2)
-
-combobox_to = ttk.Combobox(root, values=[u"..."], height=10, width=30)
-combobox_to.grid(row=1, column=2)
-
-type_of_package_var = Tkinter.IntVar()
-
-label_type = ttk.Label(root, text='Type of package:')
-label_type.grid(row=2, column=0, sticky='e',)
-
-radiobutton_doc = ttk.Radiobutton(root, variable=type_of_package_var, value=1, text='Documents')
-radiobutton_doc.grid(row=2, column=2, sticky='w')
-
-radiobutton_attr = ttk.Radiobutton(root, variable=type_of_package_var, value=2, text='Commodity Investments')
-radiobutton_attr.grid(row=3, column=2, sticky='w')
-
-label_weight = ttk.Label(root, text='Weight:')
-label_weight.grid(row=4, column=0, sticky='e')
-
-entry_weight = ttk.Entry(root)
-entry_weight.grid(row=4, column=2, sticky='w')
-
-label_cost = ttk.Label(root, text='Cost of delivery:')
-label_cost.grid(row=5, column=0, sticky='e')
-label_cost['state'] = 'disabled'
-
-label_cost_of_delivery = ttk.Label(root, text='')
-label_cost_of_delivery.grid(row=5, column=2, sticky='w')
-
-label_duration = ttk.Label(root, text='Duration of delivery:')
-label_duration.grid(row=6, column=0, sticky='e')
-label_duration['state'] = 'disabled'
-
-label_duration_of_delivery = ttk.Label(root, text='')
-label_duration_of_delivery.grid(row=6, column=2, sticky='w')
-
-button_calculate = ttk.Button(root, text='Calculate')
-button_calculate.grid(row=7, column=2)
-
-label_status = ttk.Label(root, text='')
-label_status.grid(row=8, column=0)
-# =========END GUI DESCRIPTION==========
-
 
 def new_thread(daemon=False):
     """
@@ -88,7 +38,138 @@ def new_thread(daemon=False):
 
     return wrapper
 
+class LocalDeliveryGUI:
+    def __init__(self, master):
 
+        self.location = 'russia'
+
+        self.label_from = ttk.Label(master, text='From location:')
+        self.label_from.grid(row=0, column=0, sticky='e')
+
+        self.label_to = ttk.Label(master, text='To location:')
+        self.label_to.grid(row=1, column=0, sticky='e')
+
+        self.combobox_from = ttk.Combobox(master, values=[u"..."], height=10, width=30)
+        self.combobox_from.grid(row=0, column=2)
+
+        self.combobox_to = ttk.Combobox(master, values=[u"..."], height=10, width=30)
+        self.combobox_to.grid(row=1, column=2)
+
+        self.label_weight = ttk.Label(master, text='Weight:')
+        self.label_weight.grid(row=4, column=0, sticky='e')
+
+        self.entry_weight = ttk.Entry(master)
+        self.entry_weight.grid(row=4, column=2, sticky='w')
+
+        self.label_cost = ttk.Label(master, text='Cost of delivery:')
+        self.label_cost.grid(row=5, column=0, sticky='e')
+        self.label_cost['state'] = 'disabled'
+
+        self.label_cost_of_delivery = ttk.Label(master, text='')
+        self.label_cost_of_delivery.grid(row=5, column=2, sticky='w')
+        self.label_cost_of_delivery['state'] = 'disabled'
+
+        self.label_duration = ttk.Label(master, text='Duration of delivery:')
+        self.label_duration.grid(row=6, column=0, sticky='e')
+        self.label_duration['state'] = 'disabled'
+
+        self.label_duration_of_delivery = ttk.Label(master, text='')
+        self.label_duration_of_delivery.grid(row=6, column=2, sticky='w')
+        self.label_duration_of_delivery['state'] = 'disabled'
+
+        self.button_calculate = ttk.Button(master, text='Calculate', command=self.calculate_delivery)
+        self.button_calculate.grid(row=7, column=2, sticky='e')
+
+        self.locations = Locations('russia')
+
+        GUIControls.set_location_to_comboboxes(self.locations, self.combobox_from, self.combobox_to)
+
+    def calculate_delivery(self):
+        calculate_results = api.calculate(to_location=self.locations.locations[self.combobox_to.get()]['value'],
+                                          from_location=self.locations.locations[self.combobox_from.get()]['value'],
+                                          weight=self.entry_weight.get())
+        result = calculate_results
+        self.label_cost['state'] = 'enable'
+        self.label_duration['state'] = 'enable'
+        self.label_cost_of_delivery['state'] = 'enable'
+        self.label_duration['state'] = 'enable'
+        self.label_duration_of_delivery['state'] = 'enable'
+
+        print(calculate_results)
+
+        self.label_cost_of_delivery['text'] = result['rsp']['price'] + ' RUB'
+        self.label_duration_of_delivery['text'] = result['rsp']['term']['min'] + ' - ' + result['rsp']['term']['max'] + ' days'
+
+
+class InternationalDeliveryGUI:
+    def __init__(self, master):
+
+        self.type_of_package_var = Tkinter.StringVar()
+
+        self.label_to = ttk.Label(master, text='To location:')
+        self.label_to.grid(row=0, column=0, sticky='e')
+
+        self.combobox_to = ttk.Combobox(master, values=[u"..."], height=10, width=30)
+        self.combobox_to.grid(row=0, column=2)
+
+        self.label_type = ttk.Label(master, text='Type of package:')
+        self.label_type.grid(row=1, column=0, sticky='e',)
+
+        self.radiobutton_doc = ttk.Radiobutton(master, variable=self.type_of_package_var, value='doc', text='Documents')
+        self.radiobutton_doc.grid(row=1, column=2, sticky='w')
+
+        self.radiobutton_attr = ttk.Radiobutton(master, variable=self.type_of_package_var, value='att', text='Commodity Investments')
+        self.radiobutton_attr.grid(row=2, column=2, sticky='w')
+
+        self.label_weight = ttk.Label(master, text='Weight:')
+        self.label_weight.grid(row=3, column=0, sticky='e')
+
+        self.entry_weight = ttk.Entry(master)
+        self.entry_weight.grid(row=3, column=2, sticky='w')
+
+        self.label_cost = ttk.Label(master, text='Cost of delivery:')
+        self.label_cost.grid(row=4, column=0, sticky='e')
+        self.label_cost['state'] = 'disabled'
+
+        self.label_cost_of_delivery = ttk.Label(master, text='')
+        self.label_cost_of_delivery.grid(row=4, column=2, sticky='w')
+
+        self.button_calculate = ttk.Button(master, text='Calculate', command=self.calculate_delivery)
+        self.button_calculate.grid(row=5, column=2, sticky='e')
+
+        self.locations = Locations('countries')
+
+        GUIControls.set_location_to_comboboxes(self.locations, self.combobox_to)
+
+    def calculate_delivery(self):
+        calculate_results = api.calculate(to_location=self.locations.locations[self.combobox_to.get()]['value'],
+                                          type=self.type_of_package_var.get(),
+                                          weight=self.entry_weight.get())
+        result = calculate_results
+        self.label_cost['state'] = 'enable'
+        self.label_cost_of_delivery['state'] = 'enable'
+        print(calculate_results)
+        self.label_cost_of_delivery['text'] = result['rsp']['price'] + ' RUB'
+
+# =========END GUI DESCRIPTION==========
+
+class GUIControls:
+    def __init__(self):
+        pass
+
+    @staticmethod
+    @new_thread(daemon=False)
+    def set_location_to_comboboxes(location, *comboboxes):
+        for combobox in comboboxes:
+            combobox['state'] = 'disabled'
+            combobox.set('Loading locations...')
+
+        location.load_locations()
+
+        for combobox in comboboxes:
+            combobox['state'] = 'enable'
+            combobox.set('Select location')
+            combobox['values'] = location.locations.keys()
 
 @new_thread(daemon=True)
 def connection_status():
@@ -152,22 +233,44 @@ class Locations:
                         location = location.replace(x, self.replacements[x])
         return location
 
-loc = Locations('russia', 'countries')
+# loc = Locations('russia', 'countries')
+#
+# @new_thread(daemon=True)
+# def set_locations_to_comboboxes(*args):
+#     for combobox in args:
+#         combobox['state'] = 'disabled'
+#         combobox.set('Loading locations...')
+#
+#     loc.load_locations()
+#
+#     for combobox in args:
+#         combobox['state'] = 'enable'
+#         combobox.set('Select location')
+#         combobox['values'] = loc.locations.keys()
 
-@new_thread(daemon=True)
-def set_locations_to_comboboxes(*args):
-    for combobox in args:
-        combobox['state'] = 'disabled'
-        combobox.set('Loading locations...')
+# set_locations_to_comboboxes(combobox_from, combobox_to)
 
-    loc.load_locations()
 
-    for combobox in args:
-        combobox['state'] = 'enable'
-        combobox.set('Select location')
-        combobox['values'] = loc.locations.keys()
+notebook = ttk.Notebook(root)
+tab1 = ttk.Frame(notebook)
+tab2 = ttk.Frame(notebook)
+notebook.add(tab1, text="Local delivery")
+notebook.add(tab2, text="International delivery")
+notebook.pack()
 
-set_locations_to_comboboxes(combobox_from, combobox_to)
+status_frame = ttk.Frame(root)
+status_frame.pack()
 
-connection_status()
+label_status = ttk.Label(status_frame, text='Status:')
+label_status.grid(row=0, column=0, sticky='e')
+
+test = LocalDeliveryGUI(tab1)
+
+test2 = InternationalDeliveryGUI(tab2)
+
+# connection_status()
+
+# set_locations_to_comboboxes(test.combobox_from, test.combobox_to, test2.combobox_to)
+
+# connection_status()
 root.mainloop()

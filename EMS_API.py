@@ -26,7 +26,10 @@ class EMS_API():
     def make_url_for(self, method, **kwargs):
         url = self.base_api_url + '?method=' + self.methods[method]
         for key, value in kwargs.iteritems():
-            url += '&' + key + '=' + value
+            if value is None:
+                pass
+            else:
+                url += '&' + key + '=' + value
         # from is python keyword
         url = url.replace('from_location', 'from')
         return url
@@ -65,13 +68,21 @@ class EMS_API():
         else:
             return None
 
-    def calculate(self, from_location, to_location, weight, type):
+    def calculate(self, to_location, weight, from_location=None, type=None):
         response = APIUtils.safe_connection(self.make_url_for('calculate',
                                                      from_location=from_location,
                                                      to=to_location,
-                                                     weight=weight,
-                                                     type=type))
+                                                     type=type,
+                                                     weight=weight))
         return APIUtils.safe_json_parse(response)
+
+    # def calculate(self, to_location, weight, type):
+    #     response = APIUtils.safe_connection(self.make_url_for('calculate',
+    #                                                  to=to_location,
+    #                                                  weight=weight,
+    #                                                  type=type))
+    #     return APIUtils.safe_json_parse(response)
+
 
 
 class APIUtils:
