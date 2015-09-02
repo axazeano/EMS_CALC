@@ -1,11 +1,10 @@
 # coding=utf-8
-from Tkconstants import BOTTOM
-import Tkinter
+import tkinter
 import logging
 import re
 import time
 import threading
-import ttk
+import tkinter.ttk as ttk
 from EMS_API import EMS_API
 
 api = EMS_API()
@@ -13,7 +12,7 @@ logging.basicConfig(format=u'%(filename)s[LINE:%(lineno)d]# %(levelname)-8s [%(a
                         level=logging.DEBUG)
 
 # =========GUI DESCRIPTION==========
-root = Tkinter.Tk()
+root = tkinter.Tk()
 root.wm_title('EMS Calc')
 
 def new_thread(daemon=False):
@@ -104,7 +103,7 @@ class LocalDeliveryGUI:
 class InternationalDeliveryGUI:
     def __init__(self, master):
 
-        self.type_of_package_var = Tkinter.StringVar()
+        self.type_of_package_var = tkinter.StringVar()
 
         self.label_to = ttk.Label(master, text='To location:')
         self.label_to.grid(row=0, column=0, sticky='e')
@@ -169,7 +168,10 @@ class GUIControls:
         for combobox in comboboxes:
             combobox['state'] = 'enable'
             combobox.set('Select location')
-            combobox['values'] = location.locations.keys()
+            for value in location.locations.keys():
+                combobox['values'] += (value,)
+            # combobox['values'] = location.locations.keys()
+
 
 @new_thread(daemon=True)
 def connection_status():
@@ -233,23 +235,6 @@ class Locations:
                         location = location.replace(x, self.replacements[x])
         return location
 
-# loc = Locations('russia', 'countries')
-#
-# @new_thread(daemon=True)
-# def set_locations_to_comboboxes(*args):
-#     for combobox in args:
-#         combobox['state'] = 'disabled'
-#         combobox.set('Loading locations...')
-#
-#     loc.load_locations()
-#
-#     for combobox in args:
-#         combobox['state'] = 'enable'
-#         combobox.set('Select location')
-#         combobox['values'] = loc.locations.keys()
-
-# set_locations_to_comboboxes(combobox_from, combobox_to)
-
 
 notebook = ttk.Notebook(root)
 tab1 = ttk.Frame(notebook)
@@ -268,9 +253,5 @@ test = LocalDeliveryGUI(tab1)
 
 test2 = InternationalDeliveryGUI(tab2)
 
-# connection_status()
 
-# set_locations_to_comboboxes(test.combobox_from, test.combobox_to, test2.combobox_to)
-
-# connection_status()
 root.mainloop()

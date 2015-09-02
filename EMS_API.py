@@ -1,11 +1,14 @@
+import http
 import time
+from urllib.error import HTTPError
+from urllib.request import urlopen
 
 __author__ = 'kubantsev'
 
-import urllib2
+import urllib
 import threading
 import json
-import httplib
+# import httplib
 import logging
 
 logging.basicConfig(format=u'%(filename)s[LINE:%(lineno)d]# %(levelname)-8s [%(asctime)s]  %(message)s',
@@ -25,7 +28,7 @@ class EMS_API():
 
     def make_url_for(self, method, **kwargs):
         url = self.base_api_url + '?method=' + self.methods[method]
-        for key, value in kwargs.iteritems():
+        for key, value in kwargs.items():
             if value is None:
                 pass
             else:
@@ -76,14 +79,6 @@ class EMS_API():
                                                      weight=weight))
         return APIUtils.safe_json_parse(response)
 
-    # def calculate(self, to_location, weight, type):
-    #     response = APIUtils.safe_connection(self.make_url_for('calculate',
-    #                                                  to=to_location,
-    #                                                  weight=weight,
-    #                                                  type=type))
-    #     return APIUtils.safe_json_parse(response)
-
-
 
 class APIUtils:
     """
@@ -98,16 +93,16 @@ class APIUtils:
         :return: Return data from URL, in case when all works fine, else return None
         """
         try:
-            response = urllib2.urlopen(url)
-        except urllib2.HTTPError, e:
+            response = urlopen(url)
+        except HTTPError as e:
             logging.error('HTTPError = ' + str(e.code))
-        except urllib2.URLError:
+        except urllib.error.URLError:
             logging.error('URLError')
-        except httplib.HTTPException:
-            logging.error('URLError')
+        # except http.client.HTTPException:
+        #     logging.error('URLError')
         else:
             logging.debug(url + ' has be successfully opened')
-            return response.read()
+            return response.read().decode("utf-8")
         return None
 
     @staticmethod
@@ -119,7 +114,7 @@ class APIUtils:
         """
         try:
             parsed_json = json.loads(json_string)
-        except TypeError, e:
+        except ValueError as e:
             logging.error('Parse error')
             return None
         else:
