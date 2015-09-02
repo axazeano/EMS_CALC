@@ -55,7 +55,7 @@ class EMS_API():
                 pass
             else:
                 # add to url string '&key=value'
-                url += '&%s=%s' % (key, value)
+                url += '&{}={}'.format(key, value)
         # from is python keyword
         url = url.replace('from_location', 'from')
         return url
@@ -194,6 +194,6 @@ class APIUtils:
                 logging.debug('JSON parsed successfully')
                 return parsed_json
             else:
-                logging.error('Error Message: %s ; Code: %s' % (parsed_json['rsp']['err']['msg'],
+                logging.error('Error Message: {} ; Code: {}'.format(parsed_json['rsp']['err']['msg'],
                                                                 parsed_json['rsp']['err']['code']))
                 return None
