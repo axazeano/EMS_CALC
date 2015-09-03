@@ -11,7 +11,9 @@ import json
 import logging
 
 logging.basicConfig(format=u'%(filename)s[LINE:%(lineno)d]# %(levelname)-8s [%(asctime)s]  %(message)s',
-                        level=logging.DEBUG)
+                    level=logging.DEBUG)
+
+
 # TODO: set correct logging config
 
 
@@ -30,6 +32,7 @@ class EMS_API():
 
         ems.calculate - method for calculate costs of delivery and duration of delivery (for local delivery)
     """
+
     def __init__(self):
         self.executor = futures.ThreadPoolExecutor(max_workers=5)
         # Root url for API
@@ -118,10 +121,10 @@ class EMS_API():
         dict with price for international delivery
         """
         response = self.utils.safe_connection(self.make_url_for('calculate',
-                                                     from_location=from_location,
-                                                     to=to_location,
-                                                     type=type,
-                                                     weight=weight))
+                                                                from_location=from_location,
+                                                                to=to_location,
+                                                                type=type,
+                                                                weight=weight))
 
         parsed_json_object = self.utils.safe_json_parse(response)
         # Check that parsed_json_object isn't empty
@@ -143,9 +146,10 @@ class APIUtils:
     """
     Class contains some functions for work with REST API.
     """
+
     def __init__(self):
-            # self.executor is a thread pool, witch execute future tasks
-            self.executor = futures.ThreadPoolExecutor(max_workers=5)
+        # self.executor is a thread pool, witch execute future tasks
+        self.executor = futures.ThreadPoolExecutor(max_workers=5)
 
     def safe_connection_done(self, future):
         return future.result()
@@ -169,11 +173,12 @@ class APIUtils:
             except urllib.error.URLError:
                 logging.error('URLError')
             except http.client.HTTPException:
-                 logging.error('URLError')
+                logging.error('URLError')
             else:
                 logging.debug(url + ' has been successfully opened')
                 return response.read().decode("utf-8")
             return None
+
         # Add task for self.executor
         non_blocked_connection = self.executor.submit(blocked_connection)
         non_blocked_connection.add_done_callback(self.safe_connection_done)
@@ -204,5 +209,5 @@ class APIUtils:
                 return parsed_json
             else:
                 logging.error('Error Message: {} ; Code: {}'.format(parsed_json['rsp']['err']['msg'],
-                                                                parsed_json['rsp']['err']['code']))
+                                                                    parsed_json['rsp']['err']['code']))
                 return None
