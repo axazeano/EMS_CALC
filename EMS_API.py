@@ -37,8 +37,6 @@ class EMS_API():
         self.executor = futures.ThreadPoolExecutor(max_workers=5)
         # Root url for API
         self.base_api_url = 'http://emspost.ru/api/rest/'
-        # BAD
-        self.utils = APIUtils()
         # Methods, that are provided by API
         self.methods = {
             'echo': 'ems.test.echo',
@@ -71,9 +69,9 @@ class EMS_API():
         and check response
         :return: If API is available, return True, in other cases return False
         """
-        response = self.utils.safe_connection(self.make_url_for('echo'))
+        response = APIUtils.safe_connection(self.make_url_for('echo'))
         if response:
-            parsed_response = self.utils.safe_json_parse(response)
+            parsed_response = APIUtils.safe_json_parse(response)
             if parsed_response['rsp']['msg'] == 'successeful':
                 logging.info('HeartBeat: EMS API is available')
                 return True
@@ -89,8 +87,8 @@ class EMS_API():
         Realization of method ems.get.max.weight
         :return: max_weight from response or None
         """
-        response = self.utils.safe_connection(self.make_url_for('get_max_weight'))
-        parsed_json_object = self.utils.safe_json_parse(response)
+        response = APIUtils.safe_connection(self.make_url_for('get_max_weight'))
+        parsed_json_object = APIUtils.safe_json_parse(response)
         if parsed_json_object:
             return float(parsed_json_object['rsp']['max_weight'])
         else:
@@ -102,9 +100,9 @@ class EMS_API():
         :param type: type of locations. May be equals 'russia', 'cities', 'regions', 'countries'
         :return: locations value from response or None
         """
-        response = self.utils.safe_connection(self.make_url_for('get.locations', type=type))
-        # response = self.utils.safe_connection_done()
-        parsed_json_object = self.utils.safe_json_parse(response)
+        response = APIUtils.safe_connection(self.make_url_for('get.locations', type=type))
+        # response = APIUtils.safe_connection_done()
+        parsed_json_object = APIUtils.safe_json_parse(response)
         if parsed_json_object:
             return parsed_json_object['rsp']['locations']
         else:
@@ -120,13 +118,13 @@ class EMS_API():
         :return: Return dict with price, min_days, max_days for local delivery,
         dict with price for international delivery
         """
-        response = self.utils.safe_connection(self.make_url_for('calculate',
+        response = APIUtils.safe_connection(self.make_url_for('calculate',
                                                                 from_location=from_location,
                                                                 to=to_location,
                                                                 type=type,
                                                                 weight=weight))
 
-        parsed_json_object = self.utils.safe_json_parse(response)
+        parsed_json_object = APIUtils.safe_json_parse(response)
         # Check that parsed_json_object isn't empty
         if parsed_json_object:
             # Case for local delivery
@@ -147,21 +145,8 @@ class APIUtils:
     Class contains some functions for work with REST API.
     """
 
-    def __init__(self):
-        # self.executor is a thread pool, witch execute future tasks
-        self.executor = futures.ThreadPoolExecutor(max_workers=5)
-
-    def safe_connection_done(self, future):
-        return future.result()
-
-    def safe_connection(self, url):
-        """
-        Method gives inner function blocked_connection to self.executor for invoke as future task.
-        :param url: url for connection
-        :return: Return data from URL, in case when all works fine, else return None
-        """
-
-        def blocked_connection():
+    @staticmethod
+    def safe_connection(url):
             """
             Method opens url in try catch block.
             :return: If url has been opened without exceptions return decoded in utf-8  data from response
@@ -179,17 +164,10 @@ class APIUtils:
                 return response.read().decode("utf-8")
             return None
 
-        # Add task for self.executor
-        non_blocked_connection = self.executor.submit(blocked_connection)
-        non_blocked_connection.add_done_callback(self.safe_connection_done)
-        # print('ttt')
-        # print(non_blocked_connection.result())
-        # print('ttt')
-        return non_blocked_connection.result()
-
-    def safe_json_parse(self, json_string):
+    @staticmethod
+    def safe_json_parse(json_string):
         """
-        Method, which  parse json object in try catch block and add error in log,
+        Method, which  parses json object in try catch block and add error in log,
         when exceptions are raised
         :param json_string: string, witch will be parse
         :return: In case when parse done without exceptions return dict with parsed json object.

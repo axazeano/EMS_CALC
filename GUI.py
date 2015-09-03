@@ -169,7 +169,7 @@ class LocalDeliveryGUI(BaseGUI):
         if not errors:
             return True
         else:
-            self.show_validate_error_window(errors)
+            self.executor.submit(self.show_validate_error_window, errors)
 
     def show_validate_error_window(self, errors):
         error_string = ''
@@ -298,7 +298,7 @@ class InternationalDeliveryGUI(BaseGUI):
         if not errors:
             return True
         else:
-            self.show_validate_error_window(errors)
+            self.executor.submit(self.show_validate_error_window, errors)
             return False
 
     def show_validate_error_window(self, errors):
