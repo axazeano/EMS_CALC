@@ -8,3 +8,9 @@ GUI for work with EMS API
 * Run GUI.py
 
 *In case of launch on Windows OS, be sure that correct environment variables are set*
+
+**Screenshots:**
+
+![Alt text](https://github.com/axazeano/EMS_CALC/blob/dirty3/screenshots/1.png "First")
+
+![Alt text](https://github.com/axazeano/EMS_CALC/blob/dirty3/screenshots/2.png "Second")
