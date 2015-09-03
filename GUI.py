@@ -1,4 +1,5 @@
 # coding=utf-8
+from concurrent import futures
 import tkinter
 import logging
 import re
@@ -15,140 +16,308 @@ logging.basicConfig(format=u'%(filename)s[LINE:%(lineno)d]# %(levelname)-8s [%(a
 root = tkinter.Tk()
 root.wm_title('EMS Calc')
 
-def new_thread(daemon=False):
+
+class BaseGUI:
     """
-    Decorator for launch function in another thread
-    :param func: function, which will be launch in another thread
-    :param demon: if demon is True, than thread dies with main thread, i.e. will be work all time.
-    By default it's False.
-    :return: return pointer to function, witch will be run in another thread
+    Base class for realisation GUI for different types of deliveries.
+    Abstract class, but doesn't extends ABCMeta class for better performance.
+    So, all methods raise NotImplementedError, include __init__() (you can't create instance of this class).
     """
-    def wrapper(func):
-        def new_thread_func(*args, **kwargs):
-            thread = threading.Thread(target=func, args=args, kwargs=kwargs)
-            if daemon:
-                thread.daemon = True
-            else:
-                thread.daemon = False
-            thread.start()
-            return thread
+    def __init__(self):
+        raise NotImplementedError
 
-        return new_thread_func
+    def _draw_elements(self):
+        """
+        Method for add defined elements to master object
+        """
+        raise NotImplementedError
 
-    return wrapper
+    def validate(self):
+        """
+        Method for validate values in gui controls, which will be use in calculate method.
+        """
+        raise NotImplementedError
 
-class LocalDeliveryGUI:
+    def calculate(self):
+        """
+        Method for calculate params (cost, duration e.t.c) of delivery.
+        """
+        raise NotImplementedError
+
+
+class LocalDeliveryGUI(BaseGUI):
     def __init__(self, master):
+        # root object for created gui elements
+        self.master = master
+        # local ThreadPool for execute future tasks
+        self.executor = futures.ThreadPoolExecutor(max_workers=3)
+        # Draw GUI elements, define in _draw_elements
+        self._draw_elements()
+        # Type of location, witch will be loaded
+        self.locations = None
+        self.executor.submit(Locations, 'russia').add_done_callback(self.set_locations)
+        # Get max weight from api
+        self.max_weight = None
+        self.executor.submit(api.get_max_weight).add_done_callback(self.set_max_weight)
+        print(self.max_weight)
 
-        self.location = 'russia'
-
-        self.label_from = ttk.Label(master, text='From location:')
+    def _draw_elements(self):
+        self.label_from = ttk.Label(self.master, text='From location:')
         self.label_from.grid(row=0, column=0, sticky='e')
 
-        self.label_to = ttk.Label(master, text='To location:')
+        self.label_to = ttk.Label(self.master, text='To location:')
         self.label_to.grid(row=1, column=0, sticky='e')
 
-        self.combobox_from = ttk.Combobox(master, values=[u"..."], height=10, width=30)
+        self.combobox_from = ttk.Combobox(self.master, values=[], height=10, width=30)
         self.combobox_from.grid(row=0, column=2)
 
-        self.combobox_to = ttk.Combobox(master, values=[u"..."], height=10, width=30)
+        self.combobox_to = ttk.Combobox(self.master, values=[], height=10, width=30)
         self.combobox_to.grid(row=1, column=2)
 
-        self.label_weight = ttk.Label(master, text='Weight:')
+        self.label_weight = ttk.Label(self.master, text='Weight:')
         self.label_weight.grid(row=4, column=0, sticky='e')
 
-        self.entry_weight = ttk.Entry(master)
+        self.entry_weight = ttk.Entry(self.master)
         self.entry_weight.grid(row=4, column=2, sticky='w')
 
-        self.label_cost = ttk.Label(master, text='Cost of delivery:')
+        self.label_cost = ttk.Label(self.master, text='Cost of delivery:')
         self.label_cost.grid(row=5, column=0, sticky='e')
         self.label_cost['state'] = 'disabled'
 
-        self.label_cost_of_delivery = ttk.Label(master, text='')
+        self.label_cost_of_delivery = ttk.Label(self.master, text='')
         self.label_cost_of_delivery.grid(row=5, column=2, sticky='w')
         self.label_cost_of_delivery['state'] = 'disabled'
 
-        self.label_duration = ttk.Label(master, text='Duration of delivery:')
+        self.label_duration = ttk.Label(self.master, text='Duration of delivery:')
         self.label_duration.grid(row=6, column=0, sticky='e')
         self.label_duration['state'] = 'disabled'
 
-        self.label_duration_of_delivery = ttk.Label(master, text='')
+        self.label_duration_of_delivery = ttk.Label(self.master, text='')
         self.label_duration_of_delivery.grid(row=6, column=2, sticky='w')
         self.label_duration_of_delivery['state'] = 'disabled'
 
-        self.button_calculate = ttk.Button(master, text='Calculate', command=self.calculate_delivery)
+        self.button_calculate = ttk.Button(self.master, text='Calculate')
+        self.button_calculate['command'] = lambda :self.executor.submit(self.calculate_delivery).\
+            add_done_callback(self.calculate_delivery_done)
         self.button_calculate.grid(row=7, column=2, sticky='e')
 
-        self.locations = Locations('russia')
-
-        GUIControls.set_location_to_comboboxes(self.locations, self.combobox_from, self.combobox_to)
-
     def calculate_delivery(self):
-        calculate_results = api.calculate(to_location=self.locations.locations[self.combobox_to.get()]['value'],
-                                          from_location=self.locations.locations[self.combobox_from.get()]['value'],
-                                          weight=self.entry_weight.get())
-        result = calculate_results
-        self.label_cost['state'] = 'enable'
-        self.label_duration['state'] = 'enable'
-        self.label_cost_of_delivery['state'] = 'enable'
-        self.label_duration['state'] = 'enable'
-        self.label_duration_of_delivery['state'] = 'enable'
+        if not self.validate():
+            return
+        else:
+            return api.calculate(to_location=self.locations[self.combobox_to.get()]['value'],
+                                from_location=self.locations[self.combobox_from.get()]['value'],
+                                weight=self.entry_weight.get())
 
-        print(calculate_results)
+    def calculate_delivery_done(self, future):
+        calculate_results = future.result()
+        if calculate_results:
+            # Enable labels
+            self.label_cost['state'] = 'enable'
+            self.label_duration['state'] = 'enable'
+            self.label_cost_of_delivery['state'] = 'enable'
+            self.label_duration['state'] = 'enable'
+            self.label_duration_of_delivery['state'] = 'enable'
 
-        self.label_cost_of_delivery['text'] = result['rsp']['price'] + ' RUB'
-        self.label_duration_of_delivery['text'] = result['rsp']['term']['min'] + ' - ' + result['rsp']['term']['max'] + ' days'
+            # Set result to labels
+            self.label_cost_of_delivery['text'] = calculate_results['price'] + ' RUB'
+            self.label_duration_of_delivery['text'] = "{} - {} days".format(calculate_results['min_days'],
+                                                                        calculate_results['max_days'])
+
+    def validate(self):
+        errors = []
+        # ===Check combobox_from=====
+        if self.combobox_from.get() == '' or self.combobox_from.get() == 'Select location':
+            errors.append("FROM location isn't selected\n")
+        else:
+            try:
+                self.locations[self.combobox_from.get()]
+            except KeyError:
+                errors.append('Wrong FROM location\n')
+
+        # ===Check combobox_to=====
+        if self.combobox_to.get() == '' or self.combobox_to.get() == 'Select location':
+            errors.append("TO location isn't selected\n")
+        else:
+            try:
+                self.locations[self.combobox_to.get()]
+            except KeyError:
+                errors.append('Wrong TO location\n')
+
+        # ===Check entry_weight=====
+        if not self.entry_weight.get():
+            errors.append("Weight isn't defined\n")
+        else:
+            try:
+                float(self.entry_weight.get())
+            except ValueError:
+                errors.append('Weight field contains wrong symbols\n')
+            else:
+                if float(self.entry_weight.get()) > self.max_weight:
+                    errors.append("Weight is more than max. Max weight is {}\n".format(self.max_weight))
+
+        if not errors:
+            return True
+        else:
+            self.show_validate_error_window(errors)
+
+    def show_validate_error_window(self, errors):
+        error_string = ''
+        for error in errors:
+            error_string += error
+        error_window = tkinter.Toplevel(self.master)
+        error_window.title('Error!')
+        label_description = ttk.Label(error_window, text='Follow mistakes were founded:', )
+        label_description.grid(row=0, column=0, sticky='w', ipadx=5, ipady=5)
+        label_errors = ttk.Label(error_window, text=error_string)
+        label_errors.grid(row=1, column=0, sticky='e',ipadx=5, ipady=5)
+        button_ok = ttk.Button(error_window, text='OK', command=error_window.destroy)
+        button_ok.grid(row=2, column=0)
+
+    def set_max_weight(self, future):
+        self.max_weight = future.result()
+
+    def set_locations(self, future):
+        self.locations = future.result().load_locations()
+        self.executor.submit(GUIControls.set_location_to_comboboxes,
+                             self.locations,
+                             self.combobox_from,
+                             self.combobox_to)
 
 
-class InternationalDeliveryGUI:
+class InternationalDeliveryGUI(BaseGUI):
     def __init__(self, master):
+        # root object for created gui elements
+        self.master = master
+        # local ThreadPool for execute future tasks
+        self.executor = futures.ThreadPoolExecutor(max_workers=3)
 
-        self.type_of_package_var = tkinter.StringVar()
+        self.type_of_package_var = tkinter.StringVar(master, '')
+        # Draw GUI elements, define in _draw_elements
+        self._draw_elements()
+        # Type of location, witch will be loaded
+        self.locations = None
+        self.executor.submit(Locations, 'countries').add_done_callback(self.set_locations)
+        # Get max weight from api
+        self.max_weight = None
+        self.executor.submit(api.get_max_weight).add_done_callback(self.set_max_weight)
+        self.max_weight_doc = 2
 
-        self.label_to = ttk.Label(master, text='To location:')
+    def _draw_elements(self):
+        self.label_to = ttk.Label(self.master, text='To location:')
         self.label_to.grid(row=0, column=0, sticky='e')
 
-        self.combobox_to = ttk.Combobox(master, values=[u"..."], height=10, width=30)
+        self.combobox_to = ttk.Combobox(self.master, values=[], height=10, width=30)
         self.combobox_to.grid(row=0, column=2)
 
-        self.label_type = ttk.Label(master, text='Type of package:')
+        self.label_type = ttk.Label(self.master, text='Type of package:')
         self.label_type.grid(row=1, column=0, sticky='e',)
 
-        self.radiobutton_doc = ttk.Radiobutton(master, variable=self.type_of_package_var, value='doc', text='Documents')
+        self.radiobutton_doc = ttk.Radiobutton(self.master, variable=self.type_of_package_var, value='doc', text='Documents')
         self.radiobutton_doc.grid(row=1, column=2, sticky='w')
 
-        self.radiobutton_attr = ttk.Radiobutton(master, variable=self.type_of_package_var, value='att', text='Commodity Investments')
+        self.radiobutton_attr = ttk.Radiobutton(self.master, variable=self.type_of_package_var, value='att', text='Commodity Investments')
         self.radiobutton_attr.grid(row=2, column=2, sticky='w')
 
-        self.label_weight = ttk.Label(master, text='Weight:')
+        self.label_weight = ttk.Label(self.master, text='Weight:')
         self.label_weight.grid(row=3, column=0, sticky='e')
 
-        self.entry_weight = ttk.Entry(master)
+        self.entry_weight = ttk.Entry(self.master)
         self.entry_weight.grid(row=3, column=2, sticky='w')
 
-        self.label_cost = ttk.Label(master, text='Cost of delivery:')
+        self.label_cost = ttk.Label(self.master, text='Cost of delivery:')
         self.label_cost.grid(row=4, column=0, sticky='e')
         self.label_cost['state'] = 'disabled'
 
-        self.label_cost_of_delivery = ttk.Label(master, text='')
+        self.label_cost_of_delivery = ttk.Label(self.master, text='')
         self.label_cost_of_delivery.grid(row=4, column=2, sticky='w')
 
-        self.button_calculate = ttk.Button(master, text='Calculate', command=self.calculate_delivery)
-        self.button_calculate.grid(row=5, column=2, sticky='e')
+        self.button_calculate = ttk.Button(self.master, text='Calculate')
+        self.button_calculate['command'] = lambda :self.executor.submit(self.calculate_delivery).\
+            add_done_callback(self.calculate_delivery_done)
+        self.button_calculate.grid(row=7, column=2, sticky='e')
 
-        self.locations = Locations('countries')
+    def set_locations(self, future):
+        self.locations = future.result().load_locations()
+        self.executor.submit(GUIControls.set_location_to_comboboxes,
+                             self.locations,
+                             self.combobox_to)
 
-        GUIControls.set_location_to_comboboxes(self.locations, self.combobox_to)
+    def set_max_weight(self, future):
+        self.max_weight = future.result()
+
+    def validate(self):
+        errors = []
+        # ===Check combobox_to=====
+        if self.combobox_to.get() == '' or self.combobox_to.get() == 'Select location':
+            errors.append("TO location isn't selected\n")
+        else:
+            try:
+                self.locations[self.combobox_to.get()]
+            except KeyError:
+                errors.append('Wrong TO location\n')
+
+        # ===Check that type of package is selected=====
+        if self.type_of_package_var:
+
+            # =====If type of package is selected, weight can be checked=====
+            if not self.entry_weight.get():
+                errors.append("Weight isn't defined\n")
+            else:
+                try:
+                    float(self.entry_weight.get())
+                except ValueError:
+                    errors.append('Weight field contains wrong symbols\n')
+                else:
+                    # Case for Documents
+                    if self.type_of_package_var.get() == 'doc' and float(self.entry_weight.get()) > self.max_weight_doc:
+                        errors.append("Weight is more than max. Max weight is {}\n".format(self.max_weight_doc))
+
+                    # Case for Commodity Investments
+                    elif self.type_of_package_var.get() == 'att' and float(self.entry_weight.get()) > self.max_weight:
+                        errors.append("Weight is more than max. Max weight is {}\n".format(self.max_weight))
+        else:
+            errors.append("Type of package isn't selected")
+
+        if not errors:
+            return True
+        else:
+            self.show_validate_error_window(errors)
+            return False
+
+    def show_validate_error_window(self, errors):
+        error_string = ''
+        for error in errors:
+            error_string += error
+        error_window = tkinter.Toplevel(self.master)
+        error_window.title('Error!')
+        label_description = ttk.Label(error_window, text='Follow mistakes were founded:', )
+        label_description.grid(row=0, column=0, sticky='w', ipadx=5, ipady=5)
+        label_errors = ttk.Label(error_window, text=error_string)
+        label_errors.grid(row=1, column=0, sticky='e',ipadx=5, ipady=5)
+        button_ok = ttk.Button(error_window, text='OK', command=error_window.destroy)
+        button_ok.grid(row=2, column=0)
 
     def calculate_delivery(self):
-        calculate_results = api.calculate(to_location=self.locations.locations[self.combobox_to.get()]['value'],
+        if not self.validate():
+            return
+        else:
+            response = api.calculate(to_location=self.locations[self.combobox_to.get()]['value'],
                                           type=self.type_of_package_var.get(),
                                           weight=self.entry_weight.get())
-        result = calculate_results
-        self.label_cost['state'] = 'enable'
-        self.label_cost_of_delivery['state'] = 'enable'
-        print(calculate_results)
-        self.label_cost_of_delivery['text'] = result['rsp']['price'] + ' RUB'
+            print(response)
+            return response
+
+    def calculate_delivery_done(self, future):
+        calculate_results = future.result()
+        if calculate_results:
+            # Enable labels
+            self.label_cost['state'] = 'enable'
+            self.label_cost_of_delivery['state'] = 'enable'
+
+            # Set result to labels
+            self.label_cost_of_delivery['text'] = calculate_results['price'] + ' RUB'
+
 
 # =========END GUI DESCRIPTION==========
 
@@ -157,36 +326,30 @@ class GUIControls:
         pass
 
     @staticmethod
-    @new_thread(daemon=False)
     def set_location_to_comboboxes(location, *comboboxes):
         for combobox in comboboxes:
             combobox['state'] = 'disabled'
             combobox.set('Loading locations...')
-
-        location.load_locations()
-
         for combobox in comboboxes:
             combobox['state'] = 'enable'
             combobox.set('Select location')
-            for value in location.locations.keys():
+            for value in location.keys():
                 combobox['values'] += (value,)
-            # combobox['values'] = location.locations.keys()
 
 
-@new_thread(daemon=True)
-def connection_status():
-    """
-    Check heartbeat of EMS API
-    :return:
-    """
-    while True:
-        if api.heartbeat():
-            label_status['text'] = 'API is available'
-            label_status['foreground'] = 'green'
-        else:
-            label_status['text'] = 'API is unavailable'
-            label_status['foreground'] = 'red'
-        time.sleep(5)
+# def connection_status():
+#     """
+#     Check heartbeat of EMS API
+#     :return:
+#     """
+#     while True:
+#         if api.heartbeat():
+#             label_status['text'] = 'API is available'
+#             label_status['foreground'] = 'green'
+#         else:
+#             label_status['text'] = 'API is unavailable'
+#             label_status['foreground'] = 'red'
+#         time.sleep(5)
 
 
 class Locations:
@@ -217,6 +380,7 @@ class Locations:
                     'type': location['type'],
                 }
         logging.debug('Loading locations: '+ str(len(self.locations))+ ' locations has been loaded')
+        return self.locations
 
     def normalize_location(self, location):
         location = location.capitalize()
@@ -236,22 +400,30 @@ class Locations:
         return location
 
 
-notebook = ttk.Notebook(root)
-tab1 = ttk.Frame(notebook)
-tab2 = ttk.Frame(notebook)
-notebook.add(tab1, text="Local delivery")
-notebook.add(tab2, text="International delivery")
-notebook.pack()
+class MainGUI:
+    """
+    Main GUI class. Contains notebook element, witch will be contains different implementations of GUI
+    """
+    def __init__(self, master):
+        self.master = master
+        self._draw_elements()
 
-status_frame = ttk.Frame(root)
-status_frame.pack()
+    def _draw_elements(self):
+        """
+        Add elements to master
+        :return: None
+        """
+        self.notebook = ttk.Notebook(self.master)
+        self.tab_local_delivery = ttk.Frame(self.notebook)
+        self.tab_international_delivery = ttk.Frame(self.notebook)
+        self.notebook.add(self.tab_local_delivery, text="Local delivery")
+        self.notebook.add(self.tab_international_delivery, text="International delivery")
+        self.notebook.pack()
 
-label_status = ttk.Label(status_frame, text='Status:')
-label_status.grid(row=0, column=0, sticky='e')
+        LocalDeliveryGUI(self.tab_local_delivery)
+        InternationalDeliveryGUI(self.tab_international_delivery)
 
-test = LocalDeliveryGUI(tab1)
 
-test2 = InternationalDeliveryGUI(tab2)
-
+MainGUI(root)
 
 root.mainloop()

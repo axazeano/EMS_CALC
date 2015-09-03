@@ -1,3 +1,5 @@
+import time
+
 __author__ = 'kubantsev'
 
 import http
@@ -98,6 +100,7 @@ class EMS_API():
         :return: locations value from response or None
         """
         response = self.utils.safe_connection(self.make_url_for('get.locations', type=type))
+        # response = self.utils.safe_connection_done()
         parsed_json_object = self.utils.safe_json_parse(response)
         if parsed_json_object:
             return parsed_json_object['rsp']['locations']
@@ -106,7 +109,7 @@ class EMS_API():
 
     def calculate(self, to_location, weight, from_location=None, type=None):
         """
-        Realization of method ems.calculate
+        Implementation of method ems.calculate
         :param to_location: is Required for both delivery types
         :param weight: is Required for both delivery types
         :param from_location: is Required for local delivery, by default is None
@@ -124,7 +127,7 @@ class EMS_API():
         # Check that parsed_json_object isn't empty
         if parsed_json_object:
             # Case for local delivery
-            if from_location is None and type is None:
+            if from_location is None:
                 return {'price': parsed_json_object['rsp']['price']}
             # Case for international delivery
             else:
@@ -144,9 +147,12 @@ class APIUtils:
             # self.executor is a thread pool, witch execute future tasks
             self.executor = futures.ThreadPoolExecutor(max_workers=5)
 
+    def safe_connection_done(self, future):
+        return future.result()
+
     def safe_connection(self, url):
         """
-        Method give inner function blocked_connection to self.executor for invoke as future task.
+        Method gives inner function blocked_connection to self.executor for invoke as future task.
         :param url: url for connection
         :return: Return data from URL, in case when all works fine, else return None
         """
@@ -168,9 +174,12 @@ class APIUtils:
                 logging.debug(url + ' has been successfully opened')
                 return response.read().decode("utf-8")
             return None
-
         # Add task for self.executor
         non_blocked_connection = self.executor.submit(blocked_connection)
+        non_blocked_connection.add_done_callback(self.safe_connection_done)
+        # print('ttt')
+        # print(non_blocked_connection.result())
+        # print('ttt')
         return non_blocked_connection.result()
 
     def safe_json_parse(self, json_string):
