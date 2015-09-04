@@ -16,36 +16,7 @@ root = tkinter.Tk()
 root.wm_title('EMS Calc')
 
 
-class BaseGUI:
-    """
-    Base class for realisation GUI for different types of deliveries.
-    Abstract class, but doesn't extends ABCMeta class for better performance.
-    So, all methods raise NotImplementedError, include __init__() (you can't create instance of this class).
-    """
-
-    def __init__(self):
-        raise NotImplementedError
-
-    def _draw_elements(self):
-        """
-        Method for add defined elements to master object
-        """
-        raise NotImplementedError
-
-    def validate(self):
-        """
-        Method for validate values in gui controls, which will be use in calculate method.
-        """
-        raise NotImplementedError
-
-    def calculate(self):
-        """
-        Method for calculate params (cost, duration e.t.c) of delivery.
-        """
-        raise NotImplementedError
-
-
-class LocalDeliveryGUI(BaseGUI):
+class LocalDeliveryGUI:
     """
     GUI for work with local deliveries
     """
@@ -197,7 +168,7 @@ class LocalDeliveryGUI(BaseGUI):
                              self.combobox_to)
 
 
-class InternationalDeliveryGUI(BaseGUI):
+class InternationalDeliveryGUI:
     def __init__(self, master):
         # root object for created gui elements
         self.master = master
