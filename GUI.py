@@ -57,8 +57,9 @@ class LocalDeliveryGUI(BaseGUI):
         # Draw GUI elements, define in _draw_elements
         self._draw_elements()
         # Type of location, witch will be loaded
-        self.locations = None
-        self.executor.submit(Locations, 'russia').add_done_callback(self.set_locations)
+        self.locations = Locations('russia')
+        self.executor.submit(self.locations.load_locations).add_done_callback(self.set_locations)
+        # self.executor.submit(Locations, 'russia').add_done_callback(self.set_locations)
         # Get max weight from api
         self.max_weight = None
         self.executor.submit(api.get_max_weight).add_done_callback(self.set_max_weight)
@@ -115,6 +116,7 @@ class LocalDeliveryGUI(BaseGUI):
         if not self.validate():
             return
         else:
+
             return api.calculate(to_location=self.locations[self.combobox_to.get()]['value'],
                                  from_location=self.locations[self.combobox_from.get()]['value'],
                                  weight=self.entry_weight.get())
@@ -188,7 +190,7 @@ class LocalDeliveryGUI(BaseGUI):
         self.max_weight = future.result()
 
     def set_locations(self, future):
-        self.locations = future.result().load_locations()
+        self.locations = future.result()
         self.executor.submit(GUIControls.set_location_to_comboboxes,
                              self.locations,
                              self.combobox_from,
@@ -206,8 +208,8 @@ class InternationalDeliveryGUI(BaseGUI):
         # Draw GUI elements, define in _draw_elements
         self._draw_elements()
         # Type of location, witch will be loaded
-        self.locations = None
-        self.executor.submit(Locations, 'countries').add_done_callback(self.set_locations)
+        self.locations = Locations('countries')
+        self.executor.submit(self.locations.load_locations).add_done_callback(self.set_locations)
         # Get max weight from api
         self.max_weight = None
         self.executor.submit(api.get_max_weight).add_done_callback(self.set_max_weight)
@@ -254,7 +256,7 @@ class InternationalDeliveryGUI(BaseGUI):
         self.button_calculate.grid(row=7, column=2, sticky='e')
 
     def set_locations(self, future):
-        self.locations = future.result().load_locations()
+        self.locations = future.result()
         self.executor.submit(GUIControls.set_location_to_comboboxes,
                              self.locations,
                              self.combobox_to)
