@@ -41,7 +41,7 @@ class EMS_API():
         self.methods = {
             'echo': 'ems.test.echo',
             'get_max_weight': 'ems.get.max.weight',
-            'get.locations': 'ems.get.locations',
+            'get_locations': 'ems.get.locations',
             'calculate': 'ems.calculate'
         }
 
@@ -100,7 +100,7 @@ class EMS_API():
         :param type: type of locations. May be equals 'russia', 'cities', 'regions', 'countries'
         :return: locations value from response or None
         """
-        response = APIUtils.safe_connection(self.make_url_for('get.locations', type=type))
+        response = APIUtils.safe_connection(self.make_url_for('get_locations', type=type))
         # response = APIUtils.safe_connection_done()
         parsed_json_object = APIUtils.safe_json_parse(response)
         if parsed_json_object:
