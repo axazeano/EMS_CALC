@@ -88,9 +88,13 @@ class LocalDeliveryGUI:
             return
         else:
 
-            return api.calculate(to_location=self.locations[self.combobox_to.get()]['value'],
-                                 from_location=self.locations[self.combobox_from.get()]['value'],
-                                 weight=self.entry_weight.get())
+            to_location = self.locations[self.combobox_to.get()]['value']
+            from_location = self.locations[self.combobox_from.get()]['value']
+            weight = self.entry_weight.get()
+
+            return api.calculate(to_location=to_location,
+                                 from_location=from_location,
+                                 weight=weight)
 
     def calculate_delivery_done(self, future):
         calculate_results = future.result()
@@ -258,12 +262,16 @@ class InternationalDeliveryGUI:
                 except ValueError:
                     errors.append('Weight field contains wrong symbols\n')
                 else:
+
+                    type_of_package = self.type_of_package_var.get()
+                    weight = float(self.entry_weight.get())
+
                     # Case for Documents
-                    if self.type_of_package_var.get() == 'doc' and float(self.entry_weight.get()) > self.max_weight_doc:
+                    if type_of_package == 'doc' and weight > self.max_weight_doc:
                         errors.append("Weight is more than max. Max weight is {}\n".format(self.max_weight_doc))
 
                     # Case for Commodity Investments
-                    elif self.type_of_package_var.get() == 'att' and float(self.entry_weight.get()) > self.max_weight:
+                    elif type_of_package == 'att' and weight > self.max_weight:
                         errors.append("Weight is more than max. Max weight is {}\n".format(self.max_weight))
         else:
             errors.append("Type of package isn't selected")
@@ -291,9 +299,14 @@ class InternationalDeliveryGUI:
         if not self.validate():
             return
         else:
-            response = api.calculate(to_location=self.locations[self.combobox_to.get()]['value'],
-                                     type=self.type_of_package_var.get(),
-                                     weight=self.entry_weight.get())
+
+            to_location = self.locations[self.combobox_to.get()]['value']
+            type_of_package = self.type_of_package_var.get()
+            weight = self.entry_weight.get()
+
+            response = api.calculate(to_location=to_location,
+                                     type=type_of_package,
+                                     weight=weight)
             print(response)
             return response
 
