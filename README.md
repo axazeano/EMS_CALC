@@ -1,7 +1,7 @@
-GUI for work with EMS API
+GUI for work with EMS API, based on Tkinter and TTK
 
 **Required:**
-* Python 3.2 or late
+* Python 3.2 or later
 * For Linux based OS need to install ```python-tkinter``` package
 
 **Launch:**
